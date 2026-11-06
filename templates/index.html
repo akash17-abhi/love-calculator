@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Love Calculator — Discover Your Match</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Background layers -->
+    <div class="bg-gradient"></div>
+    <div class="bg-particles" id="particles"></div>
+    <div class="bg-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <!-- Floating ambient hearts -->
+    <div class="bg-hearts" id="bgHearts"></div>
+
+    <!-- Cursor trail -->
+    <div class="cursor-trail-wrap" id="cursorTrail"></div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">⚠️</span>
+        <span class="toast-msg" id="toastMsg"></span>
+    </div>
+
+    <div class="wrapper">
+
+        <!-- ── Header ── -->
+        <header class="site-header">
+            <div class="header-icon">
+                <svg viewBox="0 0 100 90" fill="none">
+                    <path d="M50 85 C50 85 5 55 5 25 C5 10 15 2 27 2 C37 2 45 8 50 16 C55 8 63 2 73 2 C85 2 95 10 95 25 C95 55 50 85 50 85Z" fill="url(#hGrad)"/>
+                    <defs>
+                        <linearGradient id="hGrad" x1="5" y1="2" x2="95" y2="85" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#f472b6"/>
+                            <stop offset="100%" stop-color="#e11d48"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1 class="site-title">Love Calculator</h1>
+            <p class="site-subtitle">Discover your romantic destiny</p>
+        </header>
+
+        <!-- ── Input Card ── -->
+        <div class="card" id="inputCard">
+            <div class="card-label">Your Details</div>
+            <form id="loveForm" novalidate>
+
+                <div class="person-section">
+                    <div class="person-badge person-badge--you">You</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name1">Full Name</label>
+                            <div class="input-wrap">
+                                <span class="input-icon">✦</span>
+                                <input type="text" id="name1" placeholder="Your name" autocomplete="off" maxlength="50">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="date1">Date of Birth</label>
+                            <div class="input-wrap">
+                                <span class="input-icon">◈</span>
+                                <input type="date" id="date1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector">
+                    <div class="connector-line"></div>
+                    <div class="connector-heart">
+                        <svg viewBox="0 0 40 36" fill="none">
+                            <path d="M20 34 C20 34 2 22 2 10 C2 4 7 1 12 1 C15.5 1 18.5 3 20 6.5 C21.5 3 24.5 1 28 1 C33 1 38 4 38 10 C38 22 20 34 20 34Z" fill="url(#cHGrad)"/>
+                            <defs>
+                                <linearGradient id="cHGrad" x1="2" y1="1" x2="38" y2="34" gradientUnits="userSpaceOnUse">
+                                    <stop offset="0%" stop-color="#f9a8d4"/>
+                                    <stop offset="100%" stop-color="#e11d48"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <div class="connector-line"></div>
+                </div>
+
+                <div class="person-section">
+                    <div class="person-badge person-badge--beloved">Beloved</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name2">Full Name</label>
+                            <div class="input-wrap">
+                                <span class="input-icon">✦</span>
+                                <input type="text" id="name2" placeholder="Their name" autocomplete="off" maxlength="50">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="date2">Date of Birth</label>
+                            <div class="input-wrap">
+                                <span class="input-icon">◈</span>
+                                <input type="date" id="date2">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="calcBtn">
+                    <span class="btn-text">Calculate Love</span>
+                    <span class="btn-icon">→</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- ── Loading ── -->
+        <div class="loading-state" id="loadingState">
+            <div class="loading-heart">
+                <div class="pulse-ring pulse-ring-1"></div>
+                <div class="pulse-ring pulse-ring-2"></div>
+                <div class="pulse-ring pulse-ring-3"></div>
+                <svg viewBox="0 0 100 90" fill="none">
+                    <path d="M50 85 C50 85 5 55 5 25 C5 10 15 2 27 2 C37 2 45 8 50 16 C55 8 63 2 73 2 C85 2 95 10 95 25 C95 55 50 85 50 85Z" fill="url(#loadGrad)"/>
+                    <defs>
+                        <linearGradient id="loadGrad" x1="5" y1="2" x2="95" y2="85" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#f472b6"/>
+                            <stop offset="100%" stop-color="#e11d48"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <p class="loading-text">Reading the stars…</p>
+        </div>
+
+        <!-- ── Result Card ── -->
+        <div class="result-card" id="resultCard">
+
+            <!-- Names banner -->
+            <div class="names-banner">
+                <span class="result-name" id="rName1"></span>
+                <div class="names-heart">
+                    <svg viewBox="0 0 40 36" fill="none">
+                        <path d="M20 34 C20 34 2 22 2 10 C2 4 7 1 12 1 C15.5 1 18.5 3 20 6.5 C21.5 3 24.5 1 28 1 C33 1 38 4 38 10 C38 22 20 34 20 34Z" fill="url(#rHGrad)"/>
+                        <defs>
+                            <linearGradient id="rHGrad" x1="2" y1="1" x2="38" y2="34" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#f9a8d4"/>
+                                <stop offset="100%" stop-color="#e11d48"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <span class="result-name" id="rName2"></span>
+            </div>
+
+            <!-- Score ring -->
+            <div class="score-section">
+                <div class="score-ring">
+                    <svg class="score-svg" viewBox="0 0 120 120">
+                        <circle class="score-bg" cx="60" cy="60" r="50"/>
+                        <circle class="score-track" cx="60" cy="60" r="50" id="scoreTrack"/>
+                    </svg>
+                    <div class="score-inner">
+                        <div class="score-number" id="scoreNumber">0</div>
+                        <div class="score-unit">%</div>
+                    </div>
+                </div>
+                <h2 class="result-message" id="resultMessage"></h2>
+            </div>
+
+            <!-- Mood badge -->
+            <div class="mood-badge" id="moodBadge">
+                <span class="mood-emoji" id="moodEmoji">💕</span>
+                <span class="mood-text" id="moodText">Wonderful match</span>
+            </div>
+
+            <!-- Zodiac stats -->
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">Your Sign</div>
+                    <div class="stat-value" id="zodiac1"></div>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <div class="stat-label">Their Sign</div>
+                    <div class="stat-value" id="zodiac2"></div>
+                </div>
+            </div>
+
+            <!-- Love meter bar -->
+            <div class="meter-section">
+                <div class="meter-header">
+                    <span class="meter-label">Love Compatibility</span>
+                    <span class="meter-value" id="meterValue">0%</span>
+                </div>
+                <div class="meter-track">
+                    <div class="meter-fill" id="meterFill"></div>
+                </div>
+            </div>
+
+            <!-- Compatibility breakdown traits -->
+            <div class="traits-section">
+                <p class="traits-title">Compatibility Breakdown</p>
+                <div class="trait-item">
+                    <div class="trait-row">
+                        <div class="trait-name-wrap">
+                            <span class="trait-icon">🔥</span>
+                            <span class="trait-name">Passion</span>
+                        </div>
+                        <span class="trait-num" id="tPassion" style="color:#fb7185">0%</span>
+                    </div>
+                    <div class="trait-track"><div class="trait-fill tf-passion" id="fPassion"></div></div>
+                </div>
+                <div class="trait-item">
+                    <div class="trait-row">
+                        <div class="trait-name-wrap">
+                            <span class="trait-icon">🫶</span>
+                            <span class="trait-name">Trust</span>
+                        </div>
+                        <span class="trait-num" id="tTrust" style="color:#60a5fa">0%</span>
+                    </div>
+                    <div class="trait-track"><div class="trait-fill tf-trust" id="fTrust"></div></div>
+                </div>
+                <div class="trait-item">
+                    <div class="trait-row">
+                        <div class="trait-name-wrap">
+                            <span class="trait-icon">⚡</span>
+                            <span class="trait-name">Chemistry</span>
+                        </div>
+                        <span class="trait-num" id="tChem" style="color:#a78bfa">0%</span>
+                    </div>
+                    <div class="trait-track"><div class="trait-fill tf-chem" id="fChem"></div></div>
+                </div>
+                <div class="trait-item">
+                    <div class="trait-row">
+                        <div class="trait-name-wrap">
+                            <span class="trait-icon">💬</span>
+                            <span class="trait-name">Bond</span>
+                        </div>
+                        <span class="trait-num" id="tBond" style="color:#34d399">0%</span>
+                    </div>
+                    <div class="trait-track"><div class="trait-fill tf-bond" id="fBond"></div></div>
+                </div>
+            </div>
+
+            <!-- Love quote -->
+            <div class="quote-card">
+                <div class="quote-mark">"</div>
+                <p class="quote-text" id="quoteText"></p>
+            </div>
+
+            <!-- Actions -->
+            <div class="result-actions">
+                <button class="btn btn-ghost" onclick="resetForm()">↩ Try Again</button>
+                <button class="btn btn-share" onclick="shareResult()">Share 💌</button>
+            </div>
+
+            <!-- Confetti -->
+            <div class="confetti-wrap" id="confettiWrap"></div>
+        </div>
+
+        <footer class="site-footer">
+            <p>Made with ❤️ for Akshu by Abhi</p>
+            <p class="footer-credit">Developed by #AK17</p>
+        </footer>
+
+    </div><!-- /.wrapper -->
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
