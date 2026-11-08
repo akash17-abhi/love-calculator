@@ -1,17 +1,123 @@
 /* ═══════════════════════════════════════
    LOVE CALCULATOR — script.js
-   Features: floating hearts, cursor trail,
-   card tilt, traits, mood badge, share
+   Full Feature Suite:
+   - Floating hearts & particle stars
+   - Cursor heart trail & 3D tilt
+   - Theme switcher (Rose, Lavender, Amber)
+   - Web Audio synthesizer (Heartbeat & Chime)
+   - Live Zodiac badge calculation
+   - Famous couples presets
+   - Cosmic Superpower & Advice generator
+   - Downloadable Love Polaroid Card (html2canvas)
+   - Native Share & Clipboard Copy
 ═══════════════════════════════════════ */
 
-/* ── Init ── */
+/* ── Global Audio State ── */
+let soundEnabled = true;
+let audioCtx = null;
+
+function getAudioContext() {
+    if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) audioCtx = new AudioContextClass();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    return audioCtx;
+}
+
+/* ── Web Audio Synthesizer ── */
+function playClickSound() {
+    if (!soundEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.06);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.06);
+    } catch (_) {}
+}
+
+let heartbeatInterval = null;
+function startHeartbeatSound() {
+    if (!soundEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const playBeat = () => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(65, ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(45, ctx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.18, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.12);
+        };
+        playBeat();
+        setTimeout(playBeat, 240);
+        heartbeatInterval = setInterval(() => {
+            playBeat();
+            setTimeout(playBeat, 240);
+        }, 850);
+    } catch (_) {}
+}
+
+function stopHeartbeatSound() {
+    if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+    }
+}
+
+function playCelebrationChime() {
+    if (!soundEnabled) return;
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
+        const notes = [523.25, 659.25, 783.99, 987.77, 1046.50]; // C5, E5, G5, B5, C6
+        notes.forEach((freq, idx) => {
+            const startTime = ctx.currentTime + idx * 0.08;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, startTime);
+            gain.gain.setValueAtTime(0.12, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.6);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + 0.6);
+        });
+    } catch (_) {}
+}
+
+/* ══════════════════════════════════════
+   INITIALIZATION
+══════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', () => {
     generateParticles();
     initFloatingHearts();
     setMaxDate();
     injectSvgDefs();
+    initThemeSwitcher();
+    initSoundToggle();
+    initLiveZodiac();
+    initFamousPresets();
 
-    // Desktop-only effects
+    // Desktop effects
     if (window.matchMedia('(pointer: fine)').matches) {
         initCursorTrail();
         initCardTilt();
@@ -43,10 +149,10 @@ function buildGradientDef(c1, c2, c3) {
 function updateScoreGradient(pct) {
     const defs = document.querySelector('.score-svg defs');
     if (!defs) return;
-    if (pct >= 75)      defs.innerHTML = buildGradientDef('#f43f5e', '#f472b6', '#e11d48'); // rose
-    else if (pct >= 55) defs.innerHTML = buildGradientDef('#f97316', '#fbbf24', '#ea580c'); // amber
-    else if (pct >= 35) defs.innerHTML = buildGradientDef('#8b5cf6', '#a78bfa', '#7c3aed'); // violet
-    else                defs.innerHTML = buildGradientDef('#3b82f6', '#60a5fa', '#2563eb'); // blue
+    if (pct >= 75)      defs.innerHTML = buildGradientDef('#f43f5e', '#f472b6', '#e11d48');
+    else if (pct >= 55) defs.innerHTML = buildGradientDef('#f97316', '#fbbf24', '#ea580c');
+    else if (pct >= 35) defs.innerHTML = buildGradientDef('#8b5cf6', '#a78bfa', '#7c3aed');
+    else                defs.innerHTML = buildGradientDef('#3b82f6', '#60a5fa', '#2563eb');
 }
 
 /* ── Max date ── */
@@ -57,7 +163,147 @@ function setMaxDate() {
 }
 
 /* ══════════════════════════════════════
-   BACKGROUND PARTICLES
+   THEME SWITCHER
+══════════════════════════════════════ */
+function initThemeSwitcher() {
+    const btns = document.querySelectorAll('.theme-btn');
+    const saved = localStorage.getItem('love_calc_theme') || 'theme-rose';
+    setTheme(saved);
+
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const theme = btn.dataset.theme;
+            setTheme(theme);
+            playClickSound();
+        });
+    });
+}
+
+function setTheme(theme) {
+    document.body.className = theme;
+    document.querySelectorAll('.theme-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.theme === theme);
+    });
+    localStorage.setItem('love_calc_theme', theme);
+}
+
+/* ══════════════════════════════════════
+   SOUND TOGGLE
+══════════════════════════════════════ */
+function initSoundToggle() {
+    const toggle = document.getElementById('soundToggle');
+    const icon = document.getElementById('soundIcon');
+    const saved = localStorage.getItem('love_calc_sound');
+    if (saved !== null) soundEnabled = saved === 'true';
+
+    updateSoundUI();
+
+    toggle.addEventListener('click', () => {
+        soundEnabled = !soundEnabled;
+        localStorage.setItem('love_calc_sound', soundEnabled);
+        updateSoundUI();
+        if (soundEnabled) playClickSound();
+    });
+
+    function updateSoundUI() {
+        icon.textContent = soundEnabled ? '🔊' : '🔇';
+        toggle.title = soundEnabled ? 'Mute Sound' : 'Enable Sound';
+    }
+}
+
+/* ══════════════════════════════════════
+   LIVE ZODIAC CALCULATION
+══════════════════════════════════════ */
+const ZODIAC_DATA = [
+    { name: 'Capricorn', sym: '♑', elem: 'Earth 🌍', m: 1,  d: 19 },
+    { name: 'Aquarius',  sym: '♒', elem: 'Air 💨',   m: 2,  d: 18 },
+    { name: 'Pisces',    sym: '♓', elem: 'Water 💧', m: 3,  d: 20 },
+    { name: 'Aries',     sym: '♈', elem: 'Fire 🔥',  m: 4,  d: 19 },
+    { name: 'Taurus',    sym: '♉', elem: 'Earth 🌍', m: 5,  d: 20 },
+    { name: 'Gemini',    sym: '♊', elem: 'Air 💨',   m: 6,  d: 20 },
+    { name: 'Cancer',    sym: '♋', elem: 'Water 💧', m: 7,  d: 22 },
+    { name: 'Leo',       sym: '♌', elem: 'Fire 🔥',  m: 8,  d: 22 },
+    { name: 'Virgo',     sym: '♍', elem: 'Earth 🌍', m: 9,  d: 22 },
+    { name: 'Libra',     sym: '♎', elem: 'Air 💨',   m: 10, d: 22 },
+    { name: 'Scorpio',   sym: '♏', elem: 'Water 💧', m: 11, d: 21 },
+    { name: 'Sagittarius',sym:'♐', elem: 'Fire 🔥',  m: 12, d: 21 },
+    { name: 'Capricorn', sym: '♑', elem: 'Earth 🌍', m: 12, d: 31 }
+];
+
+function getZodiacInfo(dateStr) {
+    if (!dateStr) return null;
+    const parts = dateStr.split('-');
+    if (parts.length < 3) return null;
+    const m = parseInt(parts[1], 10);
+    const d = parseInt(parts[2], 10);
+    for (const z of ZODIAC_DATA) {
+        if (m === z.m && d <= z.d) return z;
+    }
+    return ZODIAC_DATA[0];
+}
+
+function initLiveZodiac() {
+    const bindLive = (dateInputId, badgeId) => {
+        const input = document.getElementById(dateInputId);
+        const badge = document.getElementById(badgeId);
+        const update = () => {
+            const z = getZodiacInfo(input.value);
+            if (z) {
+                badge.innerHTML = `<span class="zod-pill">${z.sym} ${z.name} • ${z.elem}</span>`;
+                badge.classList.add('visible');
+            } else {
+                badge.classList.remove('visible');
+                badge.innerHTML = '';
+            }
+        };
+        input.addEventListener('change', update);
+        input.addEventListener('input', update);
+    };
+    bindLive('date1', 'liveZodiac1');
+    bindLive('date2', 'liveZodiac2');
+}
+
+/* ══════════════════════════════════════
+   FAMOUS COUPLES PRESET CHIPS
+══════════════════════════════════════ */
+const FAMOUS_COUPLES = {
+    'romeo-juliet': {
+        name1: 'Romeo Montague', date1: '1998-04-14',
+        name2: 'Juliet Capulet',  date2: '2000-07-26'
+    },
+    'jack-rose': {
+        name1: 'Jack Dawson',     date1: '1995-05-18',
+        name2: 'Rose DeWitt',     date2: '1997-10-05'
+    },
+    'barbie-ken': {
+        name1: 'Barbie Roberts',  date1: '1999-03-09',
+        name2: 'Ken Carson',      date2: '1998-03-11'
+    }
+};
+
+function initFamousPresets() {
+    document.querySelectorAll('.preset-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const key = chip.dataset.couple;
+            const data = FAMOUS_COUPLES[key];
+            if (!data) return;
+
+            document.getElementById('name1').value = data.name1;
+            document.getElementById('date1').value = data.date1;
+            document.getElementById('name2').value = data.name2;
+            document.getElementById('date2').value = data.date2;
+
+            document.getElementById('date1').dispatchEvent(new Event('change'));
+            document.getElementById('date2').dispatchEvent(new Event('change'));
+
+            playClickSound();
+            showToast(`Loaded ${chip.textContent.trim()}! 💕`);
+        });
+    });
+}
+
+/* ══════════════════════════════════════
+   BACKGROUND PARTICLES & HEARTS
 ══════════════════════════════════════ */
 function generateParticles() {
     const container = document.getElementById('particles');
@@ -76,9 +322,6 @@ function generateParticles() {
     }
 }
 
-/* ══════════════════════════════════════
-   FLOATING AMBIENT HEARTS
-══════════════════════════════════════ */
 function initFloatingHearts() {
     const container = document.getElementById('bgHearts');
     if (!container) return;
@@ -190,6 +433,7 @@ function calculateLove() {
     if (!date2) { showToast("Please enter your beloved's date of birth"); return; }
 
     showLoading();
+    startHeartbeatSound();
 
     fetch('/api/calculate', {
         method: 'POST',
@@ -197,14 +441,23 @@ function calculateLove() {
         body: JSON.stringify({ name1, date1, name2, date2 })
     })
     .then(res => { if (!res.ok) throw new Error(); return res.json(); })
-    .then(data => { hideLoading(); displayResults(data, name1, name2); })
-    .catch(() => { hideLoading(); showToast('Something went wrong. Please try again.'); });
+    .then(data => {
+        stopHeartbeatSound();
+        hideLoading();
+        displayResults(data, name1, name2, date1, date2);
+        playCelebrationChime();
+    })
+    .catch(() => {
+        stopHeartbeatSound();
+        hideLoading();
+        showToast('Something went wrong. Please try again.');
+    });
 }
 
 /* ══════════════════════════════════════
    DISPLAY RESULTS
 ══════════════════════════════════════ */
-function displayResults(data, name1, name2) {
+function displayResults(data, name1, name2, date1, date2) {
     const target = data.love_percentage;
 
     // Names
@@ -221,7 +474,7 @@ function displayResults(data, name1, name2) {
     // Update score ring gradient color based on tier
     updateScoreGradient(target);
 
-    // Animate score ring + counter (small delay so CSS transitions register)
+    // Animate score ring + counter
     setTimeout(() => {
         const circumference = 314;
         document.getElementById('scoreTrack').style.strokeDashoffset =
@@ -245,17 +498,61 @@ function displayResults(data, name1, name2) {
     // Mood badge
     setMoodBadge(target);
 
-    // Traits
+    // Traits breakdown
     const traits = calculateTraits(name1, name2, target);
     setTimeout(() => animateTraits(traits), 700);
+
+    // Cosmic Advice & Superpower
+    generateCosmicAdvice(name1, name2, date1, date2, target);
 
     // Confetti burst
     setTimeout(launchConfetti, 400);
 
-    // Scroll
+    // Smooth scroll
     setTimeout(() => {
         resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
+}
+
+/* ══════════════════════════════════════
+   COSMIC SUPERPOWER & ADVICE
+══════════════════════════════════════ */
+function generateCosmicAdvice(name1, name2, date1, date2, lovePct) {
+    const z1 = getZodiacInfo(date1);
+    const z2 = getZodiacInfo(date2);
+
+    const superpowers = [
+        "Telepathic understanding & playful banter that lights up any room.",
+        "Unshakeable emotional grounding paired with endless adventurous spark.",
+        "Deep intuitive empathy—you both know what the other feels before a word is spoken.",
+        "Dynamic passion and complementary strengths that overcome any hurdle.",
+        "Pure harmony and gentle patience, making ordinary days feel magical."
+    ];
+
+    const advices = [
+        "Keep scheduling spontaneous date nights to keep your natural magnetic spark shining bright.",
+        "Never hesitate to speak your feelings freely—your bond thrives most on mutual vulnerability.",
+        "Celebrate each other's quiet milestones; your shared encouragement is your greatest strength.",
+        "Give each other room to dream individually while building your shared empire of memories.",
+        "Laugh together through life's unexpected turns—your humor is your relationship's superpower."
+    ];
+
+    // Days difference calculation
+    let daysDiffText = "In cosmic synchronization";
+    try {
+        const d1 = new Date(date1);
+        const d2 = new Date(date2);
+        const diffTime = Math.abs(d2 - d1);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (!isNaN(diffDays)) {
+            daysDiffText = `Born ${diffDays.toLocaleString()} days apart • Balanced Planetary Resonance`;
+        }
+    } catch (_) {}
+
+    const seed = (lovePct + (z1 ? z1.m : 1) + (z2 ? z2.m : 2)) % superpowers.length;
+    document.getElementById('superpowerText').textContent = superpowers[seed];
+    document.getElementById('secretAdviceText').textContent = advices[seed];
+    document.getElementById('cosmicSyncPill').textContent = `🪐 ${daysDiffText}`;
 }
 
 /* ══════════════════════════════════════
@@ -309,6 +606,60 @@ function animateTraits(traits) {
             document.getElementById(fillId).style.width = pct + '%';
             animateCountText(document.getElementById(textId), 0, pct, 1800, '%');
         }, delay);
+    });
+}
+
+/* ══════════════════════════════════════
+   POLAROID CERTIFICATE DOWNLOAD
+══════════════════════════════════════ */
+function downloadLoveCertificate() {
+    if (typeof html2canvas === 'undefined') {
+        showToast('Capture tool loading, please try again in a second.');
+        return;
+    }
+
+    const name1 = document.getElementById('rName1').textContent || 'You';
+    const name2 = document.getElementById('rName2').textContent || 'Beloved';
+    const score = document.getElementById('scoreNumber').textContent || '0';
+    const zod1  = document.getElementById('zodiac1').textContent;
+    const zod2  = document.getElementById('zodiac2').textContent;
+    const quote = document.getElementById('quoteText').textContent;
+
+    // Populate the hidden export card
+    document.getElementById('polName1').textContent = name1;
+    document.getElementById('polName2').textContent = name2;
+    document.getElementById('polScore').textContent = `${score}%`;
+    document.getElementById('polZod1').textContent  = zod1;
+    document.getElementById('polZod2').textContent  = zod2;
+    document.getElementById('polQuote').textContent = quote;
+    document.getElementById('polDate').textContent  = new Date().toLocaleDateString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric'
+    });
+
+    const exportCard = document.getElementById('polaroidExportCard');
+    const btn = document.getElementById('downloadBtn');
+    const prevText = btn.innerHTML;
+    btn.innerHTML = '⏳ Generating...';
+    btn.disabled = true;
+
+    html2canvas(exportCard, {
+        scale: 2,
+        backgroundColor: '#0d0a14',
+        useCORS: true
+    }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `Love-Certificate-${name1}-${name2}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+
+        btn.innerHTML = prevText;
+        btn.disabled = false;
+        showToast('Polaroid Card downloaded! 📸✨');
+    }).catch(err => {
+        console.error(err);
+        btn.innerHTML = prevText;
+        btn.disabled = false;
+        showToast('Failed to generate image. Please try again.');
     });
 }
 
@@ -410,6 +761,8 @@ function hideLoading() {
 
 function resetForm() {
     document.getElementById('loveForm').reset();
+    document.getElementById('liveZodiac1').classList.remove('visible');
+    document.getElementById('liveZodiac2').classList.remove('visible');
 
     const resultCard = document.getElementById('resultCard');
     resultCard.classList.remove('active');

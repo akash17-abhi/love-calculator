@@ -7,8 +7,10 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- html2canvas for Downloadable Love Certificate -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
-<body>
+<body class="theme-rose">
 
     <!-- Background layers -->
     <div class="bg-gradient"></div>
@@ -23,6 +25,18 @@
 
     <!-- Cursor trail -->
     <div class="cursor-trail-wrap" id="cursorTrail"></div>
+
+    <!-- Top floating controls -->
+    <div class="top-bar">
+        <div class="theme-switcher" title="Switch Theme">
+            <button class="theme-btn active" data-theme="theme-rose" title="Midnight Rose">🌹</button>
+            <button class="theme-btn" data-theme="theme-lavender" title="Starlight Lavender">💜</button>
+            <button class="theme-btn" data-theme="theme-sunset" title="Sunset Amber">🌅</button>
+        </div>
+        <button class="sound-toggle" id="soundToggle" title="Toggle Sound">
+            <span id="soundIcon">🔊</span>
+        </button>
+    </div>
 
     <!-- Toast -->
     <div class="toast" id="toast">
@@ -52,8 +66,20 @@
         <!-- ── Input Card ── -->
         <div class="card" id="inputCard">
             <div class="card-label">Your Details</div>
+
+            <!-- Quick presets: Famous couples -->
+            <div class="presets-section">
+                <span class="presets-label">✨ Quick Try:</span>
+                <div class="presets-row">
+                    <button type="button" class="preset-chip" data-couple="romeo-juliet">🌹 Romeo & Juliet</button>
+                    <button type="button" class="preset-chip" data-couple="jack-rose">🚢 Jack & Rose</button>
+                    <button type="button" class="preset-chip" data-couple="barbie-ken">💖 Barbie & Ken</button>
+                </div>
+            </div>
+
             <form id="loveForm" novalidate>
 
+                <!-- Person 1 -->
                 <div class="person-section">
                     <div class="person-badge person-badge--you">You</div>
                     <div class="form-row">
@@ -70,10 +96,12 @@
                                 <span class="input-icon">◈</span>
                                 <input type="date" id="date1">
                             </div>
+                            <div class="live-zodiac" id="liveZodiac1"></div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Connector -->
                 <div class="connector">
                     <div class="connector-line"></div>
                     <div class="connector-heart">
@@ -90,6 +118,7 @@
                     <div class="connector-line"></div>
                 </div>
 
+                <!-- Person 2 -->
                 <div class="person-section">
                     <div class="person-badge person-badge--beloved">Beloved</div>
                     <div class="form-row">
@@ -106,6 +135,7 @@
                                 <span class="input-icon">◈</span>
                                 <input type="date" id="date2">
                             </div>
+                            <div class="live-zodiac" id="liveZodiac2"></div>
                         </div>
                     </div>
                 </div>
@@ -246,6 +276,25 @@
                 </div>
             </div>
 
+            <!-- Cosmic Superpower & Advice Card -->
+            <div class="cosmic-advice-card" id="cosmicAdviceCard">
+                <div class="advice-header">
+                    <span class="advice-icon">✨</span>
+                    <span class="advice-title">Cosmic Superpower & Secret Advice</span>
+                </div>
+                <div class="advice-content">
+                    <div class="superpower-block">
+                        <span class="superpower-label">⚡ Superpower:</span>
+                        <p class="superpower-text" id="superpowerText"></p>
+                    </div>
+                    <div class="secret-block">
+                        <span class="secret-label">💫 Cosmic Advice:</span>
+                        <p class="secret-text" id="secretAdviceText"></p>
+                    </div>
+                    <div class="cosmic-sync-pill" id="cosmicSyncPill"></div>
+                </div>
+            </div>
+
             <!-- Love quote -->
             <div class="quote-card">
                 <div class="quote-mark">"</div>
@@ -256,10 +305,40 @@
             <div class="result-actions">
                 <button class="btn btn-ghost" onclick="resetForm()">↩ Try Again</button>
                 <button class="btn btn-share" onclick="shareResult()">Share 💌</button>
+                <button class="btn btn-download" id="downloadBtn" onclick="downloadLoveCertificate()">📸 Save Card</button>
             </div>
 
             <!-- Confetti -->
             <div class="confetti-wrap" id="confettiWrap"></div>
+        </div>
+
+        <!-- Hidden Polaroid Card for Export -->
+        <div id="polaroidExportCard" class="polaroid-export">
+            <div class="polaroid-inner">
+                <div class="polaroid-top">
+                    <span class="polaroid-badge">COSMIC LOVE CERTIFICATE</span>
+                    <span class="polaroid-date" id="polDate"></span>
+                </div>
+                <div class="polaroid-names">
+                    <span id="polName1"></span>
+                    <span class="pol-heart">❤️</span>
+                    <span id="polName2"></span>
+                </div>
+                <div class="polaroid-score-box">
+                    <div class="pol-number" id="polScore"></div>
+                    <div class="pol-label">MATCH COMPATIBILITY</div>
+                </div>
+                <div class="polaroid-zodiac-row">
+                    <span id="polZod1"></span>
+                    <span class="pol-sparkle">✦</span>
+                    <span id="polZod2"></span>
+                </div>
+                <p class="polaroid-quote" id="polQuote"></p>
+                <div class="polaroid-footer">
+                    <span>Certified by SKYLAB</span>
+                    <span>✨ Written in the Stars</span>
+                </div>
+            </div>
         </div>
 
         <footer class="site-footer">
