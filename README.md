@@ -25,4 +25,4 @@ python app.py
 Then open [http://127.0.0.1:5000](http://127.0.0.1:5000)
 
 ---
-Made with ❤️ by SKYLAB · Exploring cosmic connections ✨
+Made with ❤️ by SKYLAB
